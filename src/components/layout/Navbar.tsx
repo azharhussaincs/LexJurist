@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UserAvatar } from '../common/UserAvatar';
 import {
@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   ChevronDown,
   Award,
-  Layers
+  Layers,
+  FileText
 } from 'lucide-react';
 
 interface Props {
@@ -31,12 +32,42 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false);
 
+  const roleSwitcherRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (roleSwitcherRef.current && !roleSwitcherRef.current.contains(target)) {
+        setRoleSwitcherOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close mobile drawer on route change or resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const navLinks = [
     { label: 'Feed & Docket', route: '/home' },
-    { label: 'Counsel Roster', route: '/lawyers' },
+    { label: 'Counsel', route: '/lawyers' },
     { label: 'Network', route: '/connections' },
     { label: 'Practice Groups', route: '/communities' },
-    { label: 'Opportunities', route: '/jobs' },
+    { label: 'Searches', route: '/jobs' },
     { label: 'CLE & Symposia', route: '/events' },
   ];
 
@@ -48,52 +79,63 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
     onRouteChange(route);
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
+    setRoleSwitcherOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#090D14]/95 backdrop-blur-md border-b border-[#1A2333] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Zone 1: Distinctive Brand Lockup & Global Search */}
-        <div className="flex items-center gap-4 shrink-0">
+    <header className="sticky top-0 z-40 w-full max-w-full bg-[#090D14]/95 backdrop-blur-md border-b border-[#1A2333] transition-colors">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        {/* Zone 1: Distinctive Brand Lockup & Search Trigger */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={() => handleNavClick('/home')}
-            className="flex items-center gap-3 text-left group focus:outline-none"
+            className="flex items-center gap-2.5 text-left group focus:outline-none"
           >
-            <div className="w-8 h-8 rounded border border-amber-500/40 bg-gradient-to-br from-[#1C160C] via-[#2A1E0E] to-[#120D06] flex items-center justify-center text-amber-400 shadow-sm group-hover:border-amber-400/70 transition-all">
+            <div className="w-8 h-8 rounded border border-amber-500/40 bg-gradient-to-br from-[#1C160C] via-[#2A1E0E] to-[#120D06] flex items-center justify-center text-amber-400 shadow-sm group-hover:border-amber-400/80 transition-all shrink-0">
               <Scale className="w-4 h-4 text-amber-400 group-hover:scale-105 transition-transform" />
             </div>
             <div>
-              <div className="font-display font-bold text-base tracking-[0.1em] text-slate-100 group-hover:text-amber-300 transition-colors flex items-center gap-1.5">
+              <div className="font-display font-bold text-sm sm:text-base tracking-[0.1em] text-slate-100 group-hover:text-amber-300 transition-colors flex items-center gap-1">
                 <span>LEXJURIST</span>
               </div>
-              <p className="text-[9px] font-display uppercase tracking-[0.18em] text-amber-500/70 leading-none">
-                Chambers & Collegiate Roll
+              <p className="hidden sm:block text-[9px] font-display uppercase tracking-[0.16em] text-amber-500/70 leading-none">
+                Chambers & Bar Roll
               </p>
             </div>
           </button>
 
-          {/* Quick global search trigger */}
+          {/* Search Trigger: Compact on laptop, expanded on wider screens */}
           <button
             onClick={onOpenSearch}
-            className="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded bg-[#0E1420] border border-[#1E293B] text-xs text-slate-400 hover:text-slate-200 hover:border-amber-500/30 transition-all w-52 lg:w-64"
+            className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded bg-[#0E1420] border border-[#1E293B] text-xs text-slate-400 hover:text-slate-200 hover:border-amber-500/30 transition-all w-44 2xl:w-56"
+            title="Search LexJurist docket (Press / or ⌘K)"
           >
-            <Search className="w-3.5 h-3.5 text-amber-400/80" />
-            <span className="truncate">Search counsel, precedent, citation...</span>
-            <kbd className="hidden lg:inline ml-auto text-[10px] font-mono bg-[#182234] px-1.5 py-0.5 rounded text-slate-400 border border-[#27354E]">
+            <Search className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
+            <span className="truncate text-[11px]">Search docket...</span>
+            <kbd className="ml-auto text-[9px] font-mono bg-[#182234] px-1 py-0.5 rounded text-slate-400 border border-[#27354E]">
               ⌘K
             </kbd>
           </button>
+
+          {/* Compact search icon button on medium screens */}
+          <button
+            onClick={onOpenSearch}
+            className="hidden sm:flex xl:hidden p-1.5 rounded bg-[#0E1420] border border-[#1E293B] text-slate-400 hover:text-amber-400 transition-colors"
+            title="Search LexJurist docket"
+          >
+            <Search className="w-4 h-4 text-amber-400/80" />
+          </button>
         </div>
 
-        {/* Zone 2: Clean Typography Navigation */}
-        <nav className="hidden lg:flex items-center gap-1">
+        {/* Zone 2: Navigation Links (Clean, Centered, Zero-Pill) */}
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 min-w-0">
           {navLinks.map((link) => {
             const isActive = currentRoute === link.route || currentRoute.startsWith(`${link.route}/`);
             return (
               <button
                 key={link.route}
                 onClick={() => handleNavClick(link.route)}
-                className={`px-3 py-1.5 text-xs tracking-wide transition-all whitespace-nowrap relative rounded ${
+                className={`px-2.5 xl:px-3 py-1.5 text-xs tracking-wide transition-all whitespace-nowrap relative rounded ${
                   isActive
                     ? 'text-amber-300 font-semibold bg-amber-950/20'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 font-medium'
@@ -109,26 +151,26 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
         </nav>
 
         {/* Zone 3: Executive Actions & Persona Credentials */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Quick Demo Persona Switcher */}
-          <div className="relative">
+          <div className="relative" ref={roleSwitcherRef}>
             <button
               onClick={() => setRoleSwitcherOpen(!roleSwitcherOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded bg-[#0E1420] border border-[#232F42] hover:border-amber-500/40 text-slate-200 transition-colors"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 text-xs rounded bg-[#0E1420] border border-[#232F42] hover:border-amber-500/40 text-slate-200 transition-colors"
               title="Switch demo persona for testing"
             >
-              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span className="hidden sm:inline font-mono-data text-[11px] text-amber-300">
                 {isAdmin ? 'Registrar' : isOrg ? 'Law Firm' : 'Counsel'}
               </span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
             </button>
 
             {roleSwitcherOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-[#0E131E] border border-[#26354D] rounded-lg shadow-2xl py-2 z-50">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] bg-[#0E131E] border border-[#26354D] rounded-lg shadow-2xl py-2 z-50 animate-in fade-in duration-100">
                 <div className="px-3.5 py-2 border-b border-[#1A2538] text-[10px] font-display uppercase tracking-widest text-amber-400/90 flex items-center justify-between">
                   <span>Switch Verified Persona</span>
-                  <span className="font-mono text-slate-500 lowercase">live preview</span>
+                  <span className="font-mono text-slate-500 lowercase">active session</span>
                 </div>
                 {allUsers.map((u) => {
                   const isCurrent = u.id === currentUser.id;
@@ -139,7 +181,7 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
                         switchUser(u.id);
                         setRoleSwitcherOpen(false);
                       }}
-                      className={`w-full px-3.5 py-2.5 text-left flex items-start gap-3 hover:bg-[#162030] text-xs transition-colors ${
+                      className={`w-full px-3.5 py-2 text-left flex items-start gap-2.5 hover:bg-[#162030] text-xs transition-colors ${
                         isCurrent ? 'bg-[#141C2A] border-l-2 border-amber-400' : ''
                       }`}
                     >
@@ -171,7 +213,7 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
             className={`relative p-2 rounded text-slate-400 hover:text-slate-100 hover:bg-[#131B2A] transition-colors ${
               currentRoute === '/messages' ? 'text-amber-400 bg-[#131B2A]' : ''
             }`}
-            title="Confidential Communications"
+            title="Confidential Inter-Chambers Communications"
           >
             <MessageSquare className="w-4 h-4" />
           </button>
@@ -191,28 +233,29 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
           </button>
 
           {/* User Profile dropdown */}
-          <div className="relative">
+          <div className="relative" ref={userDropdownRef}>
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center gap-2 p-1 rounded hover:bg-[#131B2A] transition-colors"
+              className="flex items-center gap-1.5 p-1 rounded hover:bg-[#131B2A] transition-colors"
+              title="My Chambers Profile"
             >
               <UserAvatar
                 name={currentUser.fullName}
                 size="sm"
                 verificationStatus={currentUser.lawyerProfile?.verificationStatus}
               />
-              <span className="hidden md:inline text-xs font-medium text-slate-200 truncate max-w-[120px]">
+              <span className="hidden 2xl:inline text-xs font-medium text-slate-200 truncate max-w-[100px]">
                 {currentUser.fullName}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
             </button>
 
             {userDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-[#0E131E] border border-[#26354D] rounded-lg shadow-2xl py-1 z-50">
+              <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-24px)] bg-[#0E131E] border border-[#26354D] rounded-lg shadow-2xl py-1 z-50 animate-in fade-in duration-100">
                 <div className="px-4 py-3 border-b border-[#1A2538] bg-[#0A0E17]/60">
                   <p className="text-xs font-semibold text-slate-100 truncate font-display">{currentUser.fullName}</p>
                   <p className="text-[11px] text-amber-400/90 font-mono truncate mt-0.5">
-                    {currentUser.lawyerProfile?.barAdmissions?.[0]?.licenseNumber || 'Active Member Roll'}
+                    {currentUser.lawyerProfile?.barAdmissions?.[0]?.licenseNumber || 'Active Bar Roll'}
                   </p>
                   <p className="text-[10px] text-slate-400 truncate">{currentUser.email}</p>
                 </div>
@@ -238,7 +281,7 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
                   className="w-full px-4 py-2 text-left text-xs text-slate-300 hover:bg-[#162030] hover:text-slate-100 flex items-center gap-2.5 transition-colors"
                 >
                   <Shield className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Bar Credentials & Privacy</span>
+                  <span>Bar Credentials & Compliance</span>
                 </button>
 
                 {isAdmin && (
@@ -267,7 +310,8 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
           {/* Mobile menu trigger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded text-slate-400 hover:text-slate-100 hover:bg-[#131B2A] transition-colors"
+            className="lg:hidden p-1.5 sm:p-2 rounded text-slate-400 hover:text-slate-100 hover:bg-[#131B2A] transition-colors"
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -276,7 +320,7 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#1A2333] bg-[#090D14] px-4 py-3 space-y-2">
+        <div className="lg:hidden border-t border-[#1A2333] bg-[#090D14] px-4 py-3 space-y-3 animate-in fade-in duration-150">
           <button
             onClick={() => {
               onOpenSearch();
@@ -285,23 +329,43 @@ export const Navbar: React.FC<Props> = ({ currentRoute, onRouteChange, onOpenSea
             className="w-full flex items-center gap-2 px-3 py-2 rounded bg-[#0E1420] border border-[#1E293B] text-xs text-slate-300"
           >
             <Search className="w-3.5 h-3.5 text-amber-400" />
-            <span>Search counsel, precedents, jobs...</span>
+            <span>Search counsel, precedents, mandates...</span>
           </button>
 
-          <div className="pt-2 space-y-1">
-            {navLinks.map((link) => (
-              <button
-                key={link.route}
-                onClick={() => handleNavClick(link.route)}
-                className={`w-full text-left px-3 py-2 rounded text-xs transition-colors ${
-                  currentRoute === link.route
-                    ? 'bg-amber-950/40 text-amber-300 font-semibold border-l-2 border-amber-400'
-                    : 'text-slate-300 hover:bg-[#131B2A]'
-                }`}
-              >
-                {link.label}
-              </button>
-            ))}
+          <div className="space-y-1">
+            {navLinks.map((link) => {
+              const isActive = currentRoute === link.route || currentRoute.startsWith(`${link.route}/`);
+              return (
+                <button
+                  key={link.route}
+                  onClick={() => handleNavClick(link.route)}
+                  className={`w-full text-left px-3 py-2.5 rounded text-xs transition-colors flex items-center justify-between ${
+                    isActive
+                      ? 'bg-amber-950/40 text-amber-300 font-semibold border-l-2 border-amber-400'
+                      : 'text-slate-300 hover:bg-[#131B2A]'
+                  }`}
+                >
+                  <span>{link.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-2 border-t border-[#1A2333] flex items-center justify-between text-xs text-slate-400">
+            <button
+              onClick={() => handleNavClick('/settings')}
+              className="hover:text-amber-300 flex items-center gap-1.5"
+            >
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              <span>Chambers Compliance</span>
+            </button>
+            <button
+              onClick={() => handleNavClick('/saved')}
+              className="hover:text-amber-300 flex items-center gap-1.5"
+            >
+              <Bookmark className="w-3.5 h-3.5 text-slate-400" />
+              <span>Saved Items</span>
+            </button>
           </div>
         </div>
       )}

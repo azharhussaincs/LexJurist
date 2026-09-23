@@ -117,7 +117,7 @@ export function AppContent() {
   const isAuthPage = currentRoute === '/login' || currentRoute === '/register';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#090D14] text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
       {/* Top Banner Notice */}
       <DisclaimerBanner />
 
