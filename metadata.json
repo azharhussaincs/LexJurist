@@ -1,0 +1,6 @@
+{
+  "name": "LexJurist - Professional Legal Network",
+  "description": "The premier verified professional networking platform exclusively for lawyers, legal counsel, and law firms.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
